@@ -2,8 +2,11 @@ package canteen;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.time.LocalDate;
@@ -49,6 +52,7 @@ public class CanteenApp extends JFrame {
         for (FoodItem f : service.getMenu())
             menuModel.addRow(new Object[]{f.getId(), f.getName(), f.getPrice(), f.getPrepMinutes()});
         menuTable = new JTable(menuModel);
+                styleTable(menuTable);
         JScrollPane menuScroll = new JScrollPane(menuTable);
         menuScroll.setBorder(BorderFactory.createTitledBorder("Today's Menu"));
 
@@ -72,6 +76,7 @@ public class CanteenApp extends JFrame {
         cartScroll.setBorder(BorderFactory.createTitledBorder("Your Cart"));
 
         nameField = new JTextField(12);
+                nameField.addActionListener(e -> placeOrder());     
         JButton placeBtn = new JButton("Place Order");
         placeBtn.addActionListener(e -> placeOrder());
         JPanel placeRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -90,6 +95,7 @@ public class CanteenApp extends JFrame {
 
         // Track / cancel
         tokenField = new JTextField(8);
+                tokenField.addActionListener(e -> trackOrder());    
         JButton checkBtn = new JButton("Check status");
         checkBtn.addActionListener(e -> trackOrder());
         JButton cancelBtn = new JButton("Cancel order");
@@ -161,6 +167,8 @@ public class CanteenApp extends JFrame {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         kitchenTable = new JTable(kitchenModel);
+                styleTable(kitchenTable);
+        kitchenTable.getColumnModel().getColumn(3).setCellRenderer(new StatusRenderer());
         JButton advance = new JButton("Move to next status");
         advance.addActionListener(e -> {
             int row = kitchenTable.getSelectedRow();
@@ -207,8 +215,41 @@ public class CanteenApp extends JFrame {
     private void refreshReport() { reportArea.setText(service.dailySalesReport(LocalDate.now())); }
 
     private void msg(String s) { JOptionPane.showMessageDialog(this, s); }
+    
+    /** Common look for all tables: taller rows, bold header, full-height viewport. */
+    private static void styleTable(JTable t) {
+        t.setRowHeight(26);
+        t.setFillsViewportHeight(true);
+        t.setShowVerticalLines(false);
+        t.getTableHeader().setFont(t.getTableHeader().getFont().deriveFont(Font.BOLD));
+        t.getTableHeader().setReorderingAllowed(false);
+    }
+
+    /** Colours the Status column so the kitchen can see order state at a glance. */
+    private static class StatusRenderer extends DefaultTableCellRenderer {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean selected,
+                                                       boolean focus, int row, int col) {
+            Component c = super.getTableCellRendererComponent(table, value, selected, focus, row, col);
+            setHorizontalAlignment(CENTER);
+            if (!selected) {
+                c.setForeground(switch ((OrderStatus) value) {
+                    case PLACED -> new Color(0x1565C0);     // blue
+                    case PREPARING -> new Color(0xE65100);  // orange
+                    case READY -> new Color(0x2E7D32);      // green
+                    default -> Color.DARK_GRAY;
+                });
+                c.setFont(c.getFont().deriveFont(Font.BOLD));
+            }
+            return c;
+        }
+    }
+
 
     public static void main(String[] args) {
+                try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception ignored) { /* fall back to default look */ }
         SwingUtilities.invokeLater(() -> new CanteenApp().setVisible(true));
     }
 }
