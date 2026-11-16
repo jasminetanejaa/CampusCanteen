@@ -15,7 +15,10 @@ Course: 25CSE0202 Programming in Java | Swing GUI + CSV file storage
 | Generate pickup tokens          | Order.getToken() -> T101, T102...                  |
 | Estimate queue position         | queuePosition(), estimatedWaitMinutes()            |
 | Manage kitchen preparation      | Kitchen tab, advance() with OrderStatus.next()     |
-| Daily sales analytics           | Analytics tab, dailySalesReport() using Streams    |
+| Daily sales analytics           | Analytics tab, 
+|   - extras                      | Avg order value, items sold, best seller           |
+
+dailySalesReport() using Streams    |
 
 ## Class design (OOP)
 - Person (abstract) -> Student : inheritance, abstraction, polymorphism (getRole)
