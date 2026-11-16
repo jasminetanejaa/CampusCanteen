@@ -110,6 +110,12 @@ public class CanteenService {
         sb.append(String.format("Orders placed : %d%n", today.size()));
         sb.append(String.format("Cancelled     : %d%n", cancelled));
         sb.append(String.format("Revenue       : Rs %.2f%n", revenue));
+        sb.append(String.format("Avg order     : Rs %.2f%n", valid.isEmpty() ? 0.0 : revenue / valid.size()));
+        sb.append(String.format("Items sold    : %d%n", qtyByItem.values().stream().mapToInt(Integer::intValue).sum()));
+        sb.append("Best seller   : ").append(qtyByItem.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(e -> e.getKey() + " (" + e.getValue() + ")")
+                .orElse("-")).append("\n");
         sb.append("\nItems sold (high to low):\n");
         if (qtyByItem.isEmpty()) sb.append("  (no sales yet)\n");
         qtyByItem.entrySet().stream()
