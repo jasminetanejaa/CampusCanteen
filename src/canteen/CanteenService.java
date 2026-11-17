@@ -100,6 +100,7 @@ public class CanteenService {
 
         double revenue = valid.stream().mapToDouble(Order::getTotal).sum();
         long cancelled = today.size() - valid.size();
+                long collected = valid.stream().filter(o -> o.getStatus() == OrderStatus.COLLECTED).count();
 
         Map<String, Integer> qtyByItem = new TreeMap<>();
         valid.forEach(o -> o.getItems().forEach((f, q) -> qtyByItem.merge(f.getName(), q, Integer::sum)));
@@ -109,6 +110,8 @@ public class CanteenService {
         sb.append("----------------------------------------\n");
         sb.append(String.format("Orders placed : %d%n", today.size()));
         sb.append(String.format("Cancelled     : %d%n", cancelled));
+        sb.append(String.format("Collected     : %d%n", collected));
+        sb.append(String.format("Still pending : %d%n", valid.size() - collected));
         sb.append(String.format("Revenue       : Rs %.2f%n", revenue));
         sb.append(String.format("Avg order     : Rs %.2f%n", valid.isEmpty() ? 0.0 : revenue / valid.size()));
         sb.append(String.format("Items sold    : %d%n", qtyByItem.values().stream().mapToInt(Integer::intValue).sum()));
