@@ -39,6 +39,7 @@ public class CanteenApp extends JFrame {
         add(tabs);
         refreshKitchen();
         refreshReport();
+        new javax.swing.Timer(10_000, e -> refreshKitchen()).start();   // auto-refresh every 10 s
     }
 
     // ---------------- Student tab ----------------
@@ -52,7 +53,7 @@ public class CanteenApp extends JFrame {
         for (FoodItem f : service.getMenu())
             menuModel.addRow(new Object[]{f.getId(), f.getName(), f.getPrice(), f.getPrepMinutes()});
         menuTable = new JTable(menuModel);
-                styleTable(menuTable);
+        styleTable(menuTable);
         JScrollPane menuScroll = new JScrollPane(menuTable);
         menuScroll.setBorder(BorderFactory.createTitledBorder("Today's Menu"));
 
@@ -76,7 +77,7 @@ public class CanteenApp extends JFrame {
         cartScroll.setBorder(BorderFactory.createTitledBorder("Your Cart"));
 
         nameField = new JTextField(12);
-                nameField.addActionListener(e -> placeOrder());     
+        nameField.addActionListener(e -> placeOrder());      // Enter = place order
         JButton placeBtn = new JButton("Place Order");
         placeBtn.addActionListener(e -> placeOrder());
         JPanel placeRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -95,7 +96,7 @@ public class CanteenApp extends JFrame {
 
         // Track / cancel
         tokenField = new JTextField(8);
-                tokenField.addActionListener(e -> trackOrder());    
+        tokenField.addActionListener(e -> trackOrder());     // Enter = check status
         JButton checkBtn = new JButton("Check status");
         checkBtn.addActionListener(e -> trackOrder());
         JButton cancelBtn = new JButton("Cancel order");
@@ -167,7 +168,7 @@ public class CanteenApp extends JFrame {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         kitchenTable = new JTable(kitchenModel);
-                styleTable(kitchenTable);
+        styleTable(kitchenTable);
         kitchenTable.getColumnModel().getColumn(3).setCellRenderer(new StatusRenderer());
         JButton advance = new JButton("Move to next status");
         advance.addActionListener(e -> {
@@ -190,12 +191,20 @@ public class CanteenApp extends JFrame {
     }
 
     private void refreshKitchen() {
+        int sel = kitchenTable.getSelectedRow();
+        String selectedToken = sel >= 0 ? (String) kitchenModel.getValueAt(sel, 0) : null;
         kitchenModel.setRowCount(0);
         List<Order> active = service.activeOrders();
         for (Order o : active)
             kitchenModel.addRow(new Object[]{o.getToken(), o.getStudent().getName(), o.itemsSummary(),
                     o.getStatus(), service.queuePosition(o) == 0 ? "-" : service.queuePosition(o),
                     service.estimatedWaitMinutes(o)});
+        if (selectedToken != null)                       // keep the same order selected after refresh
+            for (int i = 0; i < kitchenModel.getRowCount(); i++)
+                if (selectedToken.equals(kitchenModel.getValueAt(i, 0))) {
+                    kitchenTable.setRowSelectionInterval(i, i);
+                    break;
+                }
     }
 
     // ---------------- Analytics tab ----------------
@@ -215,7 +224,7 @@ public class CanteenApp extends JFrame {
     private void refreshReport() { reportArea.setText(service.dailySalesReport(LocalDate.now())); }
 
     private void msg(String s) { JOptionPane.showMessageDialog(this, s); }
-    
+
     /** Common look for all tables: taller rows, bold header, full-height viewport. */
     private static void styleTable(JTable t) {
         t.setRowHeight(26);
@@ -245,9 +254,8 @@ public class CanteenApp extends JFrame {
         }
     }
 
-
     public static void main(String[] args) {
-                try {
+        try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception ignored) { /* fall back to default look */ }
         SwingUtilities.invokeLater(() -> new CanteenApp().setVisible(true));
